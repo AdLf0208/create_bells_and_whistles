@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "condition": {
+        "type": "minecraft:survives_explosion"
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "bellsandwhistles:copper_bogie_steps"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "bellsandwhistles:blocks/copper_bogie_steps"
+}

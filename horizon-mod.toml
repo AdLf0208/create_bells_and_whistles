@@ -1,0 +1,35 @@
+# Bells & Whistles for Horizon — the decorative station/metro block set as one flat SDK package
+# (mod API 0.2).
+#
+# Migrated 2026-11-18 from the retired `.hnmod` container (Horizon's mod-API merge #16941,
+# launcher >= 0.2.70; PR #17992). One file now carries both halves: `assets/` + `data/` are the
+# carried content (36 decorative blocks, their block items, loot, recipes, tags and creative tab)
+# and `src/` is the port's code (the test-only catalogue the content generator reads). The slice
+# has no gameplay hook, so the `impl Hooks` is empty on purpose; `src/runtime.rs` is
+# byte-identical to the retired bundle's.
+#
+# Licence: GPL-3.0-or-later, read from the jar (`mods.toml` declares `GPL-3.0`; the repository
+# `LICENSE` is the GPL v3 text); rank 1, copyleft — publishable under the same licence with its
+# complete corresponding source. `LICENSE` and `LICENSE-NOTICE.md` travel inside the package.
+# Local-only until the maintainer approves publishing (ARCHITECTURE.md section 8).
+id = "bellsandwhistles"
+name = "Bells & Whistles"
+# The port's own version, not the original mod's 0.4.7-1.21.1: a resubmission is always a new
+# version, and this is the first publication of the SDK package.
+version = "0.2.0"
+description = """Bells & Whistles' decorative station, metro and train blocks for Horizon: 36 blocks — the andesite/brass/copper grab rails, bogie steps and door steps, the headlight, the ornate iron trapdoor, the station platform, the metro casing/panel/trapdoor/window set and eighteen pilots — with their block items, self-drop loot tables, 44 carried recipes, the climbable and mineable/pickaxe tags and one creative tab. The blocks copy vanilla templates (ladder, lever, iron trapdoor, carved pumpkin, end rod, iron block), because the original's Create classes do not exist here; the headlight therefore keeps a lever's powered state and toggles on right click, and the nine Create-only polished-cut pilots have no recipe. There is no block entity, entity, menu, renderer, config or network code: the original mod at 0.4.7 ships none."""
+authors = ["lev"]
+# A native mod: Rust in src/, compiled by the launcher against the game build [native] pins,
+# beside the carried assets/ and data/. The id is the resource namespace and the only identity.
+api = "0.2"
+# The installation side, not the hook's: an integrated server belongs to the client installation,
+# so a single-player world or a LAN host needs both.
+side = "both"
+# The one shared value every manifest carries ("May add blocks, items, mob effects and entity
+# types"). This package carries 36 blocks and their items, so the claim is real.
+capabilities = ["registries"]
+
+[native]
+game = "26.3"
+horizon = "0b14f8acfd97fa2c750e42795249dcc981178ca4"
+mixins = "e59da9094f0c2fdda6c627fe9eff22dec6a906f0"

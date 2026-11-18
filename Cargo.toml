@@ -1,0 +1,21 @@
+[package]
+# Port of Create: Bells & Whistles 0.4.7-1.21.1 (sudoLev/BellsAndWhistlesMod, tag v0.4.7,
+# commit fb2e040f70ddaf8d98101c6bd484ad597954e804, GPL-3.0). The decorative catalogue is a
+# clean-room Rust rewrite; the textures, models and lang are the upstream mod's own
+# GPL-licensed assets and travel under the same licence (LICENSE, LICENSE-NOTICE.md). This is
+# the port's own version: the retired .hnmod bundle was 0.1.0/0.4.7-1.21.1 and a resubmission
+# is a new version.
+#
+# Cargo's name and version are not the mod's identity: horizon-mod.toml is.
+name = "horizon-bellsandwhistles"
+version = "0.2.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+description = "Bells & Whistles' decorative station, metro and train blocks for Horizon"
+publish = false
+
+[dependencies]
+# The pinned SDK's API crate, fetched into .horizon/sdk/ by any `cargo horizon-mod` command (the
+# launcher builds against its own copy of the same build). Any other registry dependency must be
+# pinned with `horizon-launcher native-lock .` before building.
+horizon-mod-api = { path = ".horizon/sdk/api/crates/horizon-mod-api" }

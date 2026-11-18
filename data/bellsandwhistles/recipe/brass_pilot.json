@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "pilots",
+  "pattern": [
+    " I ",
+    "# #",
+    "III"
+  ],
+  "key": {
+    "#": "minecraft:copper_ingot",
+    "I": "minecraft:copper_nugget"
+  },
+  "result": {
+    "id": "bellsandwhistles:brass_pilot"
+  }
+}

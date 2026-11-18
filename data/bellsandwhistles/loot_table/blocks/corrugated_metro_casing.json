@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "condition": {
+        "type": "minecraft:survives_explosion"
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "bellsandwhistles:corrugated_metro_casing"
+        }
+      ],
+      "rolls": 1
+    }
+  ],
+  "random_sequence": "bellsandwhistles:blocks/corrugated_metro_casing"
+}

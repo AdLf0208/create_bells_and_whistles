@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "pilots",
+  "pattern": [
+    " I ",
+    "# #",
+    "III"
+  ],
+  "key": {
+    "#": "minecraft:iron_ingot",
+    "I": "minecraft:iron_nugget"
+  },
+  "result": {
+    "id": "bellsandwhistles:metal_pilot"
+  }
+}
