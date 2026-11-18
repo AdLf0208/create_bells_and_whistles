@@ -1,0 +1,78 @@
+{
+  "template": "minecraft:end_rod",
+  "properties": {
+    "hardness": 2.0,
+    "explosion_resistance": 6.0,
+    "sounds": "minecraft:iron_block",
+    "requires_tool": true
+  },
+  "item": true,
+  "default_state": {
+    "facing": "up"
+  },
+  "shapes": {
+    "property": "facing",
+    "values": {
+      "up": [
+        [
+          0.0,
+          0.8125,
+          0.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      "down": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.1875,
+          1.0
+        ]
+      ],
+      "north": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          0.1875
+        ]
+      ],
+      "south": [
+        [
+          0.0,
+          0.0,
+          0.8125,
+          1.0,
+          1.0,
+          1.0
+        ]
+      ],
+      "west": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.1875,
+          1.0,
+          1.0
+        ]
+      ],
+      "east": [
+        [
+          0.8125,
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0
+        ]
+      ]
+    }
+  }
+}

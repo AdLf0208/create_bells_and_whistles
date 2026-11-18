@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "##"
+  ],
+  "key": {
+    "#": "bellsandwhistles:metro_casing"
+  },
+  "result": {
+    "id": "bellsandwhistles:metro_trapdoor",
+    "count": 6
+  }
+}

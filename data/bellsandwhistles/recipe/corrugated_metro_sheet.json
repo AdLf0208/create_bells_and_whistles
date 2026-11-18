@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "bellsandwhistles:metro_casing"
+  ],
+  "result": {
+    "id": "bellsandwhistles:corrugated_metro_casing"
+  }
+}

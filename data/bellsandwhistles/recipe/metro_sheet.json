@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    "minecraft:iron_ingot",
+    "minecraft:green_dye"
+  ],
+  "result": {
+    "id": "bellsandwhistles:metro_casing",
+    "count": 4
+  }
+}

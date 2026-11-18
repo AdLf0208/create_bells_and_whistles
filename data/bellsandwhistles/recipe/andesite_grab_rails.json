@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "misc",
+  "pattern": [
+    "# #",
+    "# #",
+    "# #"
+  ],
+  "key": {
+    "#": "minecraft:andesite"
+  },
+  "result": {
+    "id": "bellsandwhistles:andesite_grab_rails",
+    "count": 8
+  }
+}
