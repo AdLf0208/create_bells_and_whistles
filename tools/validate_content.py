@@ -167,6 +167,138 @@ for path in (ROOT / "data" / NS / "recipe").glob("*.json"):
     if recipe["result"]["id"] not in item_ids:
         errors.append(f"recipe {path.stem}: unknown result {recipe['result']['id']}")
 
+
+# ---------------------------------------------------------------- recipe rules
+#
+# The same rules the runtime tests apply, plus the one the tests cannot see: a
+# grid that a *vanilla* 26.3 recipe also fills is ambiguous, because the recipe
+# manager picks one of the matches and the port cannot say which. Vanilla's
+# shaped match is tried at every offset and in both mirror orientations and
+# every cell outside the pattern must be empty.
+
+vanilla_recipes = {}
+for path in (RES / "data/minecraft/recipe").glob("*.json"):
+    try:
+        record = json.loads(path.read_text())
+    except json.JSONDecodeError:
+        continue
+    if record.get("type") in ("minecraft:crafting_shaped", "minecraft:crafting_shapeless"):
+        vanilla_recipes[path.stem] = record
+
+vanilla_tags = {}
+for path in (RES / "data/minecraft/tags/item").rglob("*.json"):
+    record = json.loads(path.read_text())
+    vanilla_tags[f"minecraft:{path.relative_to(RES / 'data/minecraft/tags/item').with_suffix('').as_posix()}"] = record.get("values", [])
+
+
+def tag_members(tag, seen=()):
+    """The item ids a vanilla item tag resolves to."""
+    if tag in seen:
+        return set()
+    members = set()
+    for value in vanilla_tags.get(tag, []):
+        if isinstance(value, dict):
+            value = value.get("id", "")
+        if value.startswith("#"):
+            members |= tag_members(value[1:], seen + (tag,))
+        else:
+            members.add(value)
+    return members
+
+
+def accepts(allowed, cell):
+    if allowed is None:
+        return cell is None
+    if cell is None:
+        return False
+    if isinstance(allowed, list):
+        return any(accepts(value, cell) for value in allowed)
+    if allowed.startswith("#"):
+        return cell in tag_members(allowed[1:])
+    return cell == allowed
+
+
+def grid_of(recipe):
+    """The 3x3 grid one craft of a shaped recipe fills."""
+    grid = [[None] * 3 for _ in range(3)]
+    for y, row in enumerate(recipe["pattern"]):
+        for x, symbol in enumerate(row):
+            if symbol != " ":
+                grid[y][x] = recipe["key"][symbol]
+    return grid
+
+
+def shaped_matches(recipe, grid):
+    pattern = recipe["pattern"]
+    height, width = len(pattern), len(pattern[0])
+    for dy in range(4 - height):
+        for dx in range(4 - width):
+            for mirror in (False, True):
+                ok = True
+                for gy in range(3):
+                    for gx in range(3):
+                        px, py = gx - dx, gy - dy
+                        if 0 <= px < width and 0 <= py < height:
+                            symbol = pattern[py][width - 1 - px if mirror else px]
+                            allowed = None if symbol == " " else recipe["key"][symbol]
+                        else:
+                            allowed = None
+                        if not accepts(allowed, grid[gy][gx]):
+                            ok = False
+                            break
+                    if not ok:
+                        break
+                if ok:
+                    return True
+    return False
+
+
+def entities(recipe):
+    """A shapeless recipe's or a stonecutter's ingredients, as a sorted multiset."""
+    if recipe.get("type") == "minecraft:stonecutting":
+        return [str(recipe["ingredient"])]
+    return sorted(str(value) for value in recipe.get("ingredients", []))
+
+
+recipes = {}
+for path in (ROOT / "data" / NS / "recipe").glob("*.json"):
+    recipes[path.stem] = json.loads(path.read_text())
+
+table = {stem: r for stem, r in recipes.items() if r["type"] != "minecraft:stonecutting"}
+for (stem, first), (other, second) in (
+    (a, b)
+    for index, a in enumerate(sorted(table.items()))
+    for b in sorted(table.items())[index + 1 :]
+):
+    if first["result"]["id"] == second["result"]["id"] and first["result"].get("count", 1) == second["result"].get("count", 1):
+        continue
+    clash = False
+    if "pattern" in first and "pattern" in second:
+        clash = shaped_matches(second, grid_of(first)) or shaped_matches(first, grid_of(second))
+    elif "ingredients" in first and "ingredients" in second:
+        clash = entities(first) == entities(second)
+    if clash:
+        errors.append(
+            f"recipes {stem} and {other} fill the same grid: "
+            f"{first['result']['id']} and {second['result']['id']} cannot both be crafted"
+        )
+
+for stem, recipe in sorted(table.items()):
+    for vanilla, record in sorted(vanilla_recipes.items()):
+        if record["result"]["id"].startswith(f"{NS}:"):
+            continue
+        if "pattern" in recipe and "pattern" in record:
+            clash = shaped_matches(record, grid_of(recipe))
+        elif "ingredients" in recipe and "ingredients" in record:
+            clash = sorted(str(value) for value in record["ingredients"]) == entities(recipe)
+        else:
+            continue
+        if clash:
+            errors.append(
+                f"recipe {stem} fills the grid of vanilla {vanilla} "
+                f"({record['result']['id']}), so the craft is ambiguous"
+            )
+
 for block in declarations:
     if f"{NS}:{block}" not in item_ids:
         errors.append(f"block {block} has no item")

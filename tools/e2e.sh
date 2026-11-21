@@ -4,14 +4,13 @@
 # the metro casing/panel/trapdoor/window set and eighteen pilots), their items,
 # loot, recipes, tags and creative tab.
 #
-# STATUS (2026-11-18, mod API 0.2): this scenario needs a game built by the launcher with this
-# flat SDK package (`horizon-launcher native-build ports/bellsandwhistles --instance <i>
-# --trust-native-code`), because the 36 blocks now travel inside `bellsandwhistles.hmod` and a
-# native package is compiled into `horizon-client`. The migration did NOT re-run it: the launcher
-# is not installed in this environment, so there is no game build at `0b14f8a` (recorded as a gap
-# in `notes.md`). The 0.1.0 runs remain the behaviour's evidence
-# (`evidence/bellsandwhistles/e2e*.log`, retired `--dev-mod content/` format); the content is the
-# same 323 files and `src/runtime.rs` is byte-identical.
+# STATUS (2026-11-21, mod API 0.2, version 0.3.0): run in game. `ports/tools/launcher-game.sh
+# build bellsandwhistles --rebuild` compiled this package into a game at the SDK pin (`0b14f8a`),
+# and the three legs are in `evidence/bellsandwhistles-e2e/`: default (`PASS`, `EXIT:0`), the
+# counterfactual differential (`PASS`, `EXIT:0`) and the control (the same Nightly without the
+# package: `FAIL: state check failed`, `EXIT:1`). The 0.1.0 logs stay as history. The scenario
+# needs a game built by the launcher with this flat SDK package, because the 36 blocks travel
+# inside `bellsandwhistles.hmod` and a native package is compiled into `horizon-client`.
 #
 #   GAME=<launcher build>/horizon-client CTL=<a horizon-ctl of the same build> tools/e2e.sh
 #   CONTROL_GAME=<a game WITHOUT the package> adds the differential leg: the same `give` finds no
@@ -31,14 +30,25 @@
 #      are `#minecraft:mineable/pickaxe`, and the cross controls are absent;
 #   6. the headlight emits light 15 while a casing emits 0;
 #   7. eight blocks drop themselves with the right tool;
-#   8. six recipes craft in a crafting table (bogie steps, grab rails,
-#      headlight, metro panel, station platform, tuff pilot) and four wrong
-#      grids leave the result empty;
+#   8. EVERY carried recipe is crafted (tools/recipe_check.py): the 30 at a
+#      crafting table and the 10 at a stonecutter. Each asserts its declared
+#      output id and count, that the grid/input emptied (the ingredients were
+#      consumed) and that nothing else mod-side appeared. The stonecutter leg
+#      reads the offers from `ctl menu`, selects the recipe's own cell with
+#      `click-gui`, and first selects a different cell to prove the selection
+#      decides the result;
 #   9. unknown ids are refused.
 #
 # COUNTERFACTUAL=1 runs the same state space on the six vanilla templates
-# (107 states), breaks them for their vanilla drops, and shows the same recipe
-# grids produce nothing without the mod.
+# (107 states) and breaks them for their vanilla drops.
+#
+# CONTROL_GAME=<a game WITHOUT the package> adds the differential legs: a `give`
+# finds no mod item, and the recipe check runs those same grids in the control
+# game (`--mode absent`), where every one must craft nothing and no stonecutter
+# may offer a `bellsandwhistles:` recipe.
+#
+# RECIPES_ONLY=1 launches and runs only the recipe phase (the red/green leg for
+# the recipe family).
 #
 # SELFTEST=1 (or the old NEGATIVE=1 with COUNTERFACTUAL=1) asserts a vanilla ladder drops a
 # Bells & Whistles item: the run MUST fail, proving the drop assertion is not vacuous.
@@ -59,6 +69,11 @@ SOCK=${SOCK:-/tmp/opencode/bellsandwhistles-e2e.sock}
 COUNTERFACTUAL=${COUNTERFACTUAL:-0}
 NEGATIVE=${NEGATIVE:-0}
 SELFTEST=${SELFTEST:-0}
+# RECIPES_ONLY=1 stops after the recipe phase: the red/green leg for that family.
+RECIPES_ONLY=${RECIPES_ONLY:-0}
+# The recipe data the check reads (`--data`); a red run points it at the
+# previous package's copied tree.
+DATA=${DATA:-$PORT/data}
 # The one-switch fail-capable leg: SELFTEST=1 is the counterfactual with the false claim asserted.
 if [ "$SELFTEST" = 1 ]; then
     COUNTERFACTUAL=1
@@ -125,6 +140,14 @@ control_leg() {
     ctl inventory | jq -e '[.hotbar[], .main[] | select(.item == "bellsandwhistles:metal_pilot")] | length == 0' >/dev/null \
         || fail "the control game has bellsandwhistles:metal_pilot, so the ids did not come from the package"
     echo "without the package: no bellsandwhistles:metal_pilot could be given"
+    ctl command "gamemode creative @s" >/dev/null || true
+    end "forceload add -12 -12 40 12"
+    end "tp @s 0.5 80 2.5"
+    end "fill -12 79 -12 40 79 12 minecraft:stone"
+    ctl wait 10
+    say "control: the same recipe grids craft nothing without the package"
+    python3 "$PORT/tools/recipe_check.py" --socket "$SOCK" --ctl "$CTL" --mode absent \
+        --table 6 80 2 --stonecutter 8 80 2 || fail "the recipes exist without the package"
     ctl quit >/dev/null 2>&1 || true
     rm -f "$SOCK"
 }
@@ -164,6 +187,22 @@ if grep -F "using the missing model" "$LOG" >/dev/null; then
     fail "a block model is incomplete (the missing model is in use)"
 fi
 echo "no blockstate/model error in the log"
+
+if [ "$RECIPES_ONLY" = 1 ]; then
+    say "recipes only: every carried recipe crafts its declared output and consumes its ingredients"
+    ctl command "gamemode creative @s" >/dev/null
+    ctl command "clear @s" >/dev/null
+    end "setblock 6 80 2 minecraft:crafting_table"
+    end "setblock 8 80 2 minecraft:stonecutter"
+    end "setblock 8 79 2 minecraft:stone"
+    ctl command "tp @s 5.5 80 2.5" >/dev/null
+    ctl wait 5
+    python3 "$PORT/tools/recipe_check.py" --socket "$SOCK" --ctl "$CTL" --mode mod \
+        --data "$DATA" --table 6 80 2 --stonecutter 8 80 2 \
+        || fail "the recipe check failed"
+    echo "PASS: every carried recipe crafts its declared output and consumes its ingredients"
+    exit 0
+fi
 
 if [ "$COUNTERFACTUAL" = 1 ]; then
     # --------------------------------------------------------- differential
@@ -211,19 +250,16 @@ if [ "$COUNTERFACTUAL" = 1 ]; then
             if [ "$mod" -ge 1 ]; then
                 fail "NEGATIVE run: the false claim held for $block (a mod item dropped)"
             fi
-            echo "NEGATIVE: the false claim failed as required ($block dropped no mod item)"
+            # The verdict line `check-e2e-logs.py` reads for a fail-capable leg.
+            echo "FAIL: SELFTEST: the false claim failed as required ($block dropped no mod item)"
             exit 1
         fi
         [ "$mod" -eq 0 ] || fail "$block dropped a Bells & Whistles item"
     done
     echo "COUNTERFACTUAL PASS: the vanilla templates drop only themselves"
 
-    say "counterfactual: the recipe grids make nothing without the mod"
-    end "setblock 6 80 2 minecraft:crafting_table"
-    ctl command "gamemode creative @s" >/dev/null
-    ctl command "tp @s 5.5 80 2.5" >/dev/null
-    ctl wait 5
-    python3 "$PORT/tools/craft_check.py" "$SOCK" "$CTL" 6 80 2 vanilla || fail "vanilla recipe check failed"
+    # The recipe differential lives in control_leg (`--mode absent` on the game
+    # built WITHOUT the package); running it here would test the modded game.
 
     say "counterfactual: unknown ids are still refused"
     if ctl give bellsandwhistles:not_a_block 1 >/dev/null 2>&1; then
@@ -398,13 +434,16 @@ drop 28 81 0 bellsandwhistles:metro_casing pickaxe
 echo "drops: the eight tested blocks dropped themselves"
 
 # ----------------------------------------------------------------- recipes
-say "recipes: six craft, four controls stay empty"
+say "recipes: every carried recipe crafts its output and consumes its ingredients"
 ctl command "gamemode creative @s" >/dev/null
 ctl command "clear @s" >/dev/null
 end "setblock 6 80 2 minecraft:crafting_table"
+end "setblock 8 80 2 minecraft:stonecutter"
+end "setblock 8 79 2 minecraft:stone"
 ctl command "tp @s 5.5 80 2.5" >/dev/null
 ctl wait 5
-python3 "$PORT/tools/craft_check.py" "$SOCK" "$CTL" 6 80 2 mod || fail "the recipe check failed"
+python3 "$PORT/tools/recipe_check.py" --socket "$SOCK" --ctl "$CTL" --mode mod \
+    --data "$DATA" --table 6 80 2 --stonecutter 8 80 2 || fail "the recipe check failed"
 
 # ------------------------------------------------------------- unknown ids
 say "unknown ids are refused"
@@ -415,4 +454,4 @@ ctl setblock 30 80 5 bellsandwhistles:bogus >/dev/null 2>&1 || true
 [ "$(block_state 30 80 5)" = "minecraft:air" ] || fail "bellsandwhistles:bogus became a block"
 echo "unknown Bells & Whistles ids are refused"
 
-echo "PASS: 378 states accepted, 36 blocks place and read back, 36 items give, the tab lists 36, placement/tags/light/drops pass, six recipes craft and four controls stay empty, unknown ids are refused"
+echo "PASS: 378 states accepted, 36 blocks place and read back, 36 items give, the tab lists 36, placement/tags/light/drops pass, every carried recipe crafts and consumes its ingredients, unknown ids are refused"

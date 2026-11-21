@@ -5,8 +5,8 @@
     "#I#"
   ],
   "key": {
-    "#": "minecraft:copper_ingot",
-    "I": "minecraft:copper_nugget"
+    "#": "minecraft:gold_ingot",
+    "I": "minecraft:gold_nugget"
   },
   "result": {
     "id": "bellsandwhistles:brass_door_step",

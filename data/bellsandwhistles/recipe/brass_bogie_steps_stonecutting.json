@@ -1,6 +1,6 @@
 {
   "type": "minecraft:stonecutting",
-  "ingredient": "minecraft:copper_ingot",
+  "ingredient": "minecraft:gold_ingot",
   "result": {
     "id": "bellsandwhistles:brass_bogie_steps",
     "count": 3

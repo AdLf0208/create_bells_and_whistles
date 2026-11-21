@@ -7,7 +7,9 @@ identical `src/main/java` and `src/main/resources`, checked with `git diff`).
 `gradle.properties` is `minecraft_version = 1.21.1`,
 `mod_version = 0.4.7-1.21.1`, `mod_license = GPL-3.0`; the repository
 `LICENSE` is the GNU GPL v3 text and the campaign source map classifies it
-**GPL-3.0-or-later**. The port is local-only until the maintainer approves
+**GPL-3.0-or-later** — a claim the jar's own `license="GPL-3.0"` and the
+licence text's lack of a project-specific later-version grant correct (see
+`notes.md`). The port is local-only until the maintainer approves
 publishing (ARCHITECTURE.md §8).
 
 The clone was read for behaviour, and the mod's own textures, models, lang and
@@ -95,10 +97,13 @@ no Create, so the port maps each class to the vanilla class it derives from
 Create polished-cut stone types (`asurine`, `calcite`, `crimsite`,
 `dripstone`, `limestone`, `ochrum`, `scoria`, `scorchia`, `veridium`) and
 cannot be expressed with 26.3 vanilla items; they are deferred (the blocks
-stay, creative-only). The other 44 are carried with a documented vanilla
-material map (`create:andesite_alloy` → `minecraft:andesite`, brass ingots /
-nuggets → copper, sheets → ingots, `create:ornate_iron_window` → iron bars,
-`c:glass` → glass). The two door-step recipes lived under `recipe/door_steps/`
+stay, creative-only). The other 44 are candidates; **40 are carried** with a
+documented vanilla material map (`create:andesite_alloy` → `minecraft:andesite`,
+brass ingots/nuggets and `create:brass_sheet`/`brass_nugget` → **gold**, copper
+→ copper, sheets → ingots, `create:ornate_iron_window` → iron bars, `c:glass` →
+glass). The four `polished_{andesite,deepslate,diorite,granite}_pilot_from_cut`
+files are not carried: their Create-only ingredient maps to the same vanilla
+block as the base file's, so each would be a byte-for-byte duplicate (0.3.0). The two door-step recipes lived under `recipe/door_steps/`
 with grab-rail file names; 26.3 flattens recipes, so they take their output's
 name (`<metal>_door_step`).
 
@@ -120,7 +125,8 @@ writes `"replace": false`, which 26.3's tag loader does not need.
    `powered` state and toggles/redstone on right-click; the model ignores it.
 3. Custom collision/selection shapes are only declared for the platform and
    panels; rails/headlight/pilots keep the template shape.
-4. 44 of 52 recipes carried; 9 Create-stone pilots have none.
+4. 40 of 52 recipes carried (30 crafting, 10 stonecutting); 9 Create-stone
+   pilots have none, and the 4 duplicated `_from_cut` files are dropped.
 5. `random_sequence` normalised.
 6. No block entity, entity, menu, renderer, config or network code: the whole
    slice is content.

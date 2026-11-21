@@ -1,9 +1,12 @@
 # Bells & Whistles for Horizon — licence notice
 
 This package is a **derivative work** of **Create: Bells & Whistles** and is distributed under
-the **same licence as the original: the GNU General Public License, version 3 or later
-(GPL-3.0-or-later)**. The full licence text is `LICENSE` beside this file (the canonical GPL v3
-text from <https://www.gnu.org/licenses/gpl-3.0.txt>).
+the **same licence as the original: the GNU General Public License, version 3 (GPL-3.0), not
+"or later"**. The pinned jar's own `META-INF/neoforge.mods.toml` declares `license="GPL-3.0"`,
+its `LICENSE` is the GPL version 3 text, and the "or any later version" wording appears only in
+that text's generic application example, not in a project-specific grant. The full licence text
+is `LICENSE` beside this file (the canonical GPL v3 text from
+<https://www.gnu.org/licenses/gpl-3.0.txt>).
 
 ## What the original is
 
@@ -30,11 +33,11 @@ text from <https://www.gnu.org/licenses/gpl-3.0.txt>).
   `src/` is the compiled source of the code, `horizon-mod.toml` and `Cargo.toml` are its
   manifests, and the content is generated reproducibly by `tools/gen_content.py` in the port tree
   from the inventory recorded in `FINDINGS.md` and the catalogue in `src/runtime.rs`. Anyone who
-  redistributes this package must ship that source under GPL-3.0-or-later as well.
+  redistributes this package must ship that source under GPL-3.0 as well.
 
 ## Authors
 
 The Rust rewrite and the 26.3 content conversion were written for this campaign; the assets,
-models, blockstates and names are the original mod's and remain under GPL-3.0-or-later. The port
+models, blockstates and names are the original mod's and remain under GPL-3.0. The port
 keeps the original's licence, gives the original author credit, and makes no claim of
 endorsement.

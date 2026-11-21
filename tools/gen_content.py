@@ -5,7 +5,7 @@ Slice 1 is the 36 decorative blocks the upstream `ModBlocks` registers: the
 nine metal rail blocks (grab rails, bogie steps, door steps), the headlight,
 the ornate iron trapdoor, the station platform, the metro casing/panel/
 trapdoor/window set and the eighteen pilots. Textures, models and lang are
-copied from the upstream repository (GPL-3.0-or-later, see ../LICENSE). Data
+copied from the upstream repository (GPL-3.0, see ../LICENSE). Data
 files are rewritten into the 26.3 formats the pinned Horizon loader reads;
 every rewrite and every material substitution is noted in ../notes.md.
 
@@ -211,6 +211,12 @@ BLOCKS = [
 # Upstream recipe path -> the 26.3 file stem. The two door-step recipes lived
 # under `recipe/door_steps/` with grab-rail file names; 26.3 recipes are flat,
 # so they take their output's name.
+#
+# `polished_{andesite,deepslate,diorite,granite}_pilot_from_cut` are not
+# carried: their ingredient is Create's `polished_cut_*`, and the only 26.3
+# stand-in is the same `polished_*` block the base file already uses, so the
+# copy would be the same recipe file twice (dead data, 0.3.0). `polished_tuff`
+# has no vanilla twin, so its `create:polished_cut_tuff` file IS the recipe.
 RECIPE_FILES = {}
 for metal in ("andesite", "brass", "copper"):
     for kind in ("bogie_steps", "grab_rails"):
@@ -243,21 +249,9 @@ RECIPE_FILES.update(
         "pilots/copper_pilot.json": "copper_pilot",
         "pilots/metal_pilot.json": "metal_pilot",
         "pilots/polished_andesite_pilot.json": "polished_andesite_pilot",
-        "pilots/polished_andesite_pilot_from_cut.json": (
-            "polished_andesite_pilot_from_cut"
-        ),
         "pilots/polished_deepslate_pilot.json": "polished_deepslate_pilot",
-        "pilots/polished_deepslate_pilot_from_cut.json": (
-            "polished_deepslate_pilot_from_cut"
-        ),
         "pilots/polished_diorite_pilot.json": "polished_diorite_pilot",
-        "pilots/polished_diorite_pilot_from_cut.json": (
-            "polished_diorite_pilot_from_cut"
-        ),
         "pilots/polished_granite_pilot.json": "polished_granite_pilot",
-        "pilots/polished_granite_pilot_from_cut.json": (
-            "polished_granite_pilot_from_cut"
-        ),
         "pilots/polished_tuff_pilot.json": "polished_tuff_pilot",
         "station_platform.json": "station_platform",
         "station_platform_stonecutter.json": "station_platform_stonecutter",
@@ -268,11 +262,14 @@ RECIPE_FILES.update(
 # a recipe that kept `create:*` would load without its ingredient; the
 # substitution keeps every carried recipe craftable and is recorded in
 # ../notes.md. The nine polished-cut stone types with no vanilla equivalent
-# keep no recipe at all (see BLOCKS).
-ITEM_MAP = {
+# keep no recipe at all (see BLOCKS).ITEM_MAP = {
     "create:andesite_alloy": "minecraft:andesite",
-    "create:brass_sheet": "minecraft:copper_ingot",
-    "create:brass_nugget": "minecraft:copper_nugget",
+    # Brass is the yellow metal, so it maps to vanilla gold and copper to
+    # copper — one to one. (Both used to map to copper, which made the four
+    # brass crafting recipes the same grids as their copper counterparts, so
+    # one of each pair could never be crafted: notes.md, 0.3.0.)
+    "create:brass_sheet": "minecraft:gold_ingot",
+    "create:brass_nugget": "minecraft:gold_nugget",
     "create:copper_sheet": "minecraft:copper_ingot",
     "create:copper_nugget": "minecraft:copper_nugget",
     "create:iron_sheet": "minecraft:iron_ingot",
@@ -289,11 +286,19 @@ ITEM_MAP = {
     "create:polished_cut_tuff_stairs": "minecraft:polished_tuff_stairs",
 }
 TAG_MAP = {
-    "c:ingots/brass": "minecraft:copper_ingot",
-    "c:nuggets/brass": "minecraft:copper_nugget",
+    "c:ingots/brass": "minecraft:gold_ingot",
+    "c:nuggets/brass": "minecraft:gold_nugget",
     "c:ingots/copper": "minecraft:copper_ingot",
     "c:nuggets/copper": "minecraft:copper_nugget",
     "c:glass": "minecraft:glass",
+}
+
+# Upstream shapes that a 26.3 *vanilla* recipe already fills. The andesite
+# door step was three andesite in a row, which is exactly vanilla's
+# `andesite_slab` grid, so the dropper could only ever get slabs; two andesite
+# is the nearest grid vanilla does not claim (notes.md, 0.3.0).
+RECIPE_PATCHES = {
+    "andesite_door_step": {"pattern": ["##"]},
 }
 
 
@@ -485,7 +490,9 @@ def main() -> None:
     # Recipes: the upstream datagen, flattened and converted to 26.3.
     for relative, stem in RECIPE_FILES.items():
         old = json.loads((source / f"data/{NAMESPACE}/recipe/{relative}").read_text())
-        write(data / f"{NAMESPACE}/recipe/{stem}.json", upgrade_recipe(old))
+        new = upgrade_recipe(old)
+        new.update(RECIPE_PATCHES.get(stem, {}))
+        write(data / f"{NAMESPACE}/recipe/{stem}.json", new)
 
     # Tags: the six climbable metal rails and the 27 stone/metal blocks.
     climbable = [f"{NAMESPACE}:{b[0]}" for b in BLOCKS if b[2]]
